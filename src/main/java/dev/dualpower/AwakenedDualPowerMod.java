@@ -5,7 +5,7 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.nbt.CompoundTag;
+import com.awakenedmod.awakened.core.data.AwakenedAttachments;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.neoforge.common.NeoForge;
@@ -25,9 +25,10 @@ public final class AwakenedDualPowerMod {
             .then(Commands.literal("status").executes(ctx -> {
                 ServerPlayer player = ctx.getSource().getPlayerOrException();
                 String second = player.getPersistentData().getString(SECOND_ID);
+                String primary = AwakenedAttachments.get(player).powerId();
                 ctx.getSource().sendSuccess(() -> Component.literal(
-                    second.isEmpty() ? "第2能力: 未登録（切り替え機能は未実装）" :
-                    "第2能力（登録のみ）: " + second + " / 切り替え機能は未実装"), false);
+                    "第1能力（読取専用）: " + primary + " / 第2能力（登録情報のみ）: " +
+                    (second.isEmpty() ? "未登録" : second) + " / 切り替え機能は未実装"), false);
                 return Command.SINGLE_SUCCESS;
             }))
             .then(Commands.literal("second").requires(source -> source.hasPermission(2))

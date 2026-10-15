@@ -1,20 +1,19 @@
-# Awakened Dual Power v0.9 — registration-only test build
+# Awakened Dual Power v0.10 — Awakened 1.19.1 compatibility check
 
-Target: Minecraft 1.21.1, NeoForge 21.1.219, Awakened 1.13.3, Java 21.
+Targets Minecraft 1.21.1, NeoForge 21.1.219+, Java 21, Awakened **1.19.1**.
 
-## Added
-- `/dualpower status` shows your registered second ability ID.
-- OP-only `/dualpower second set <power_id>` saves a string to the player persistent NBT.
-- OP-only `/dualpower second clear` removes the registration.
-- The registration does NOT verify that the power exists in Awakened.
-- This is NOT a real second awakening and does not switch any powers.
+## Changes
+- Exact Awakened 1.19.1 dependency range in `neoforge.mods.toml`.
+- `compileOnly` dependency on the supplied Awakened JAR in `libs/`. This binary is not embedded in the addon JAR.
+- `/dualpower status` reads the primary Awakened power ID without changing it, and shows separately stored second-power metadata.
+- Administrative `/dualpower second set <id>` and `clear` still manage *metadata only*; they do not grant a power or validate the power ID against Awakened's registry.
 
-## Important limitations
-- Player persistent NBT survives normal save/reload, but death/clone transfer is **not implemented or tested**.
-- No actual Awakened API adapter, no Alt+V, no effect cleanup, no ability/skill swapping.
-- This project has NOT been built against NeoForge dependencies in this environment.
-- Test in a **separate test world**; back up your saves.
+## Safety
+No Alt+V, actual power switching, skill restoration, effect cleanup, or migration is enabled.
+Use a copy of a test world; back up the original first.
 
 ## Build
-Extract and upload all contents including `.github` to GitHub. Run Actions workflow
-`Build NeoForge Bootstrap`. The Gradle build may expose API issues; report the log.
+Upload all files to GitHub, including `.github/workflows/build.yml` and `libs/`.
+Run the GitHub Actions workflow. Build is **not verified here**.
+In game run `/dualpower status` and check that the first ability shown matches the existing Awakened ability.
+Do not run `second set` with arbitrary IDs on a production world.

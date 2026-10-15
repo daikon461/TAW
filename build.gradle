@@ -9,3 +9,7 @@ java.toolchain.languageVersion = JavaLanguageVersion.of(21)
 neoForge { version = '21.1.219' }
 repositories { mavenCentral() }
 tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8' }
+
+// Compile against the exact Awakened version being targeted.
+// The binary is NOT bundled into the addon jar.
+dependencies { compileOnly files('libs/awakened-1.19.1+1.21.1.jar') }
