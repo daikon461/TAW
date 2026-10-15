@@ -264,6 +264,18 @@ public final class AwakenedDualPowerMod {
                 ctx.getSource().sendSuccess(() -> Component.literal(result), false);
                 return Command.SINGLE_SUCCESS;
             }))
+            .then(Commands.literal("attachmentaudit").executes(ctx -> {
+                ServerPlayer player = ctx.getSource().getPlayerOrException();
+                String result = AttachmentCoverageAudit.report(player);
+                ctx.getSource().sendSuccess(() -> Component.literal(result), false);
+                return Command.SINGLE_SUCCESS;
+            }))
+            .then(Commands.literal("secondpath").executes(ctx -> {
+                ServerPlayer player = ctx.getSource().getPlayerOrException();
+                String result = SecondAwakeningPath.report(player);
+                ctx.getSource().sendSuccess(() -> Component.literal(result), false);
+                return Command.SINGLE_SUCCESS;
+            }))
             .then(Commands.literal("codecslots")
                 .then(Commands.literal("save1").executes(ctx -> {
                     ServerPlayer player = ctx.getSource().getPlayerOrException();
