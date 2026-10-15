@@ -24,6 +24,7 @@ public final class AwakenedDualPowerMod {
     private static final String BACKUP_ID = "awakened_dual_power_checkpoint_v1";
     private static final String PRIMARY_ID = "awakened_dual_power_primary_id";
     private static final String SLOTS_ID = "awakened_dual_power_checkpoints_v2";
+    private static final String HISTORY_ID = "awakened_dual_power_backup_history_v1";
 
     /** Copies current Awakened data into our own namespace; never changes Awakened attachments. */
     private static void saveCheckpoint(ServerPlayer player) {
@@ -59,6 +60,12 @@ public final class AwakenedDualPowerMod {
         CompoundTag all = data.getCompound(SLOTS_ID).copy();
         CompoundTag checkpoint = data.getCompound(BACKUP_ID).copy();
         checkpoint.putInt("slot", slot);
+        // Back up the previous addon-owned slot snapshot before replacing it.
+        if (all.contains("slot" + slot, Tag.TAG_COMPOUND)) {
+            CompoundTag history = data.getCompound(HISTORY_ID).copy();
+            history.put("slot" + slot, all.getCompound("slot" + slot).copy());
+            data.put(HISTORY_ID, history);
+        }
         all.put("slot" + slot, checkpoint);
         data.put(SLOTS_ID, all);
         return true;
@@ -84,7 +91,7 @@ public final class AwakenedDualPowerMod {
     public void onPlayerClone(PlayerEvent.Clone event) {
         CompoundTag oldData = event.getOriginal().getPersistentData();
         CompoundTag newData = event.getEntity().getPersistentData();
-        for (String key : new String[]{SECOND_ID, PRIMARY_ID, BACKUP_ID, SLOTS_ID}) {
+        for (String key : new String[]{SECOND_ID, PRIMARY_ID, BACKUP_ID, SLOTS_ID, HISTORY_ID}) {
             if (oldData.contains(key)) {
                 Tag value = oldData.get(key);
                 if (value != null) newData.put(key, value.copy());
@@ -123,6 +130,97 @@ public final class AwakenedDualPowerMod {
             + (issues.isEmpty() ? "異常なし（復元安全性は未検証）" : String.join("、", issues));
     }
 
+    /** Non-mutating preflight for future power switching. */
+    private static String switchPreflight(ServerPlayer player) {
+        CompoundTag data = player.getPersistentData();
+        CompoundTag slots = data.getCompound(SLOTS_ID);
+        String current = AwakenedAttachments.get(player).powerId();
+        String first = data.getString(PRIMARY_ID);
+        String second = data.getString(SECOND_ID);
+        java.util.List<String> problems = new java.util.ArrayList<>();
+        if (current == null || current.isBlank()) problems.add("現在の能力がありません");
+        if (first.isBlank() || second.isBlank()) problems.add("両方の能力IDが未登録です");
+        if (!first.isBlank() && first.equals(second)) problems.add("能力IDが重複しています");
+        for (int i = 1; i <= 2; i++) {
+            String key = "slot" + i;
+            if (!slots.contains(key, Tag.TAG_COMPOUND)) {
+                problems.add("スロット" + i + "が未保存です");
+                continue;
+            }
+            CompoundTag snapshot = slots.getCompound(key);
+            String expected = i == 1 ? first : second;
+            if (expected.isBlank() || !expected.equals(snapshot.getString("power_id")))
+                problems.add("スロット" + i + "の能力IDが不一致です");
+            if (snapshot.getInt("schema") != 1 || snapshot.getInt("level") < 0
+                    || !Double.isFinite(snapshot.getDouble("xp")) || snapshot.getDouble("xp") < 0)
+                problems.add("スロット" + i + "の保存データが不正です");
+        }
+        if (!first.equals(current) && !second.equals(current))
+            problems.add("現在の能力が登録済みスロットと一致しません");
+        return problems.isEmpty()
+            ? "事前検査OK。ただし能力切り替え・熟練度復元の安全性は未検証のため実行不可"
+            : "切り替え不可: " + String.join(" / ", problems);
+    }
+
+    /** Validates a requested switch target without mutating any player data. */
+    private static String targetReadiness(ServerPlayer player, int target) {
+        if (target != 1 && target != 2) return "切り替え不可: スロット番号が不正";
+        CompoundTag data = player.getPersistentData();
+        CompoundTag slots = data.getCompound(SLOTS_ID);
+        String primary = data.getString(PRIMARY_ID);
+        String second = data.getString(SECOND_ID);
+        String current = AwakenedAttachments.get(player).powerId();
+        String desired = target == 1 ? primary : second;
+        if (primary.isBlank() || second.isBlank() || primary.equals(second))
+            return "切り替え不可: 第1・第2能力IDが未登録、または重複";
+        if (desired.isBlank() || !slots.contains("slot" + target, Tag.TAG_COMPOUND))
+            return "切り替え不可: 対象能力のスナップショットがありません";
+        CompoundTag snapshot = slots.getCompound("slot" + target);
+        if (snapshot.getInt("schema") != 1 || !desired.equals(snapshot.getString("power_id")))
+            return "切り替え不可: 対象能力IDまたは保存形式が不一致";
+        if (snapshot.getInt("level") < 0 || !Double.isFinite(snapshot.getDouble("xp")) || snapshot.getDouble("xp") < 0)
+            return "切り替え不可: 対象能力の経験値データが不正";
+        if (!snapshot.contains("points", Tag.TAG_COMPOUND))
+            return "切り替え不可: スキルポイント情報がありません";
+        CompoundTag points = snapshot.getCompound("points");
+        for (Stat stat : Stat.values()) {
+            if (!points.contains(stat.name(), Tag.TAG_INT) || points.getInt(stat.name()) < 0)
+                return "切り替え不可: スキルポイントが欠落または不正: " + stat.name();
+        }
+        if (!primary.equals(current) && !second.equals(current))
+            return "切り替え不可: 現在の能力が登録済み能力と一致しません";
+        if (desired.equals(current)) return "対象は現在の能力です。切り替え不要";
+        return "対象スロット" + target + "（" + desired + "）の保存データ検査OK。"
+            + "実際の切り替えは安全な復元処理が未完成のため無効です";
+    }
+
+    /** Restores only addon-owned snapshot metadata; never changes the active Awakened power. */
+    private static int restoreAddonBackup(ServerPlayer player, int slot, net.minecraft.commands.CommandSourceStack source) {
+        CompoundTag data = player.getPersistentData();
+        CompoundTag history = data.getCompound(HISTORY_ID).copy();
+        String key = "slot" + slot;
+        if (!history.contains(key, Tag.TAG_COMPOUND)) {
+            source.sendFailure(Component.literal("復元可能なバックアップがありません"));
+            return 0;
+        }
+        CompoundTag previous = history.getCompound(key).copy();
+        String expected = data.getString(slot == 1 ? PRIMARY_ID : SECOND_ID);
+        if (expected.isBlank() || !expected.equals(previous.getString("power_id"))
+                || previous.getInt("schema") != 1 || !previous.contains("points", Tag.TAG_COMPOUND)) {
+            source.sendFailure(Component.literal("バックアップの能力IDまたは保存形式が一致しないため復元中止"));
+            return 0;
+        }
+        CompoundTag slots = data.getCompound(SLOTS_ID).copy();
+        CompoundTag current = slots.contains(key, Tag.TAG_COMPOUND) ? slots.getCompound(key).copy() : null;
+        slots.put(key, previous);
+        if (current != null) history.put(key, current);
+        else history.remove(key);
+        data.put(SLOTS_ID, slots);
+        data.put(HISTORY_ID, history);
+        source.sendSuccess(() -> Component.literal("スロット" + slot + "のアドオン保存情報を復元しました。Awakened本体の能力・熟練度は変更していません"), false);
+        return Command.SINGLE_SUCCESS;
+    }
+
     @SubscribeEvent
     public void registerCommands(RegisterCommandsEvent event) {
         event.getDispatcher().register(Commands.literal("dualpower")
@@ -135,12 +233,41 @@ public final class AwakenedDualPowerMod {
                     (second.isEmpty() ? "未登録" : second) + " / 切り替え機能は未実装"), false);
                 return Command.SINGLE_SUCCESS;
             }))
+            .then(Commands.literal("switchcheck")
+                .then(Commands.literal("1").executes(ctx -> {
+                    String report = targetReadiness(ctx.getSource().getPlayerOrException(), 1);
+                    ctx.getSource().sendSuccess(() -> Component.literal(report), false);
+                    return Command.SINGLE_SUCCESS;
+                }))
+                .then(Commands.literal("2").executes(ctx -> {
+                    String report = targetReadiness(ctx.getSource().getPlayerOrException(), 2);
+                    ctx.getSource().sendSuccess(() -> Component.literal(report), false);
+                    return Command.SINGLE_SUCCESS;
+                })))
+            .then(Commands.literal("preflight").executes(ctx -> {
+                ServerPlayer player = ctx.getSource().getPlayerOrException();
+                String report = switchPreflight(player);
+                ctx.getSource().sendSuccess(() -> Component.literal(report), false);
+                return Command.SINGLE_SUCCESS;
+            }))
             .then(Commands.literal("audit").executes(ctx -> {
                 ServerPlayer player = ctx.getSource().getPlayerOrException();
                 String report = integrityReport(player);
                 ctx.getSource().sendSuccess(() -> Component.literal(report), false);
                 return Command.SINGLE_SUCCESS;
             }))
+            .then(Commands.literal("backup")
+                .then(Commands.literal("show").executes(ctx -> {
+                    CompoundTag history = ctx.getSource().getPlayerOrException().getPersistentData().getCompound(HISTORY_ID);
+                    String one = history.contains("slot1", Tag.TAG_COMPOUND) ? history.getCompound("slot1").getString("power_id") : "なし";
+                    String two = history.contains("slot2", Tag.TAG_COMPOUND) ? history.getCompound("slot2").getString("power_id") : "なし";
+                    ctx.getSource().sendSuccess(() -> Component.literal("以前の保存記録: 第1=" + one + " / 第2=" + two), false);
+                    return Command.SINGLE_SUCCESS;
+                }))
+                .then(Commands.literal("restore1").requires(source -> source.hasPermission(2))
+                    .executes(ctx -> restoreAddonBackup(ctx.getSource().getPlayerOrException(), 1, ctx.getSource())))
+                .then(Commands.literal("restore2").requires(source -> source.hasPermission(2))
+                    .executes(ctx -> restoreAddonBackup(ctx.getSource().getPlayerOrException(), 2, ctx.getSource()))))
             .then(Commands.literal("slots")
                 .then(Commands.literal("save1").executes(ctx -> saveSlotCommand(ctx.getSource().getPlayerOrException(), 1, ctx.getSource())))
                 .then(Commands.literal("save2").executes(ctx -> saveSlotCommand(ctx.getSource().getPlayerOrException(), 2, ctx.getSource())))

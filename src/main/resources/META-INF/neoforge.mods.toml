@@ -4,7 +4,7 @@ license="All Rights Reserved"
 
 [[mods]]
 modId="awakened_dual_power"
-version="0.15.0"
+version="0.19.0"
 displayName="Awakened Dual Power (Bootstrap)"
 description="Read-only checkpoint of current power and skills. No actual awakening or switching."
 

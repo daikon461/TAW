@@ -1,0 +1,5 @@
+{
+  "key.categories.awakened_dual_power": "Awakened Dual Power",
+  "key.awakened_dual_power.preview": "Power switch (preview only, Alt+V)",
+  "message.awakened_dual_power.preview": "[Dual Power] Alt+V detected. Actual power switching is disabled pending safety validation."
+}

@@ -1,21 +1,31 @@
-# Awakened Dual Power v0.15 — integrity inspection
+# Awakened Dual Power v0.19 — Alt+V input preview
 
-Minecraft 1.21.1 / NeoForge 21.1.219+ / Awakened 1.19.1 / Java 21.
+Target: Minecraft 1.21.1 / NeoForge 21.1.219 / Awakened 1.19.1 / Java 21.
 
-## Added
-`/dualpower audit` inspects addon-owned slot snapshots and IDs **without changing any data**.
-Reports mismatched IDs, duplicate powers, invalid snapshot schemas, and negative/non-finite XP.
-This is a diagnostic tool, **not** a guarantee of safe switching or recovery.
+## New
+- Client-only key mapping (V; hold Left/Right Alt and press V).
+- Japanese and English localization of the key and preview message.
+- Shows an action-bar confirmation when Alt+V is detected.
+- Dedicated server never loads the client-only handler.
+- Existing `/dualpower` checkpoint, audit, backup and readiness commands retained.
 
-All previous commands remain. Real switching, Alt+V, skill restoration, and the
-1.13.3-style GUI are still **not implemented**. Do not install in a hardcore
-production world. Verify in a disposable test world.
+**Safety:** This version does NOT switch powers, restore skill data, clear
+scaling/flight effects, or reproduce the 1.13.3 GUI. It sends no network
+packets and does not modify Awakened data when Alt+V is pressed.
 
-## Build
-Replace files in the existing GitHub repository, including `.github` and `libs`.
-Run the Actions workflow and download the resulting JAR. NeoForge compilation
-and in-game behavior are **not verified in this environment**.
+## GitHub Actions
+Upload the complete extracted project, including `.github` and `libs`.
+Run the existing build workflow and download the artifact.
+The NeoForge build has NOT been run in this environment; source may need
+API adjustments. Previous loader-independent tests can be run with Java 21.
 
 ## Test
-Run `/dualpower slots save1`, `/dualpower slots show`, `/dualpower audit`.
-Reconnect and run `/dualpower audit` again. Check the first power is unchanged.
+1. Back up your world, use a separate non-hardcore test world.
+2. Confirm `/dualpower status` still works.
+3. Hold Alt and press V: action bar should show a preview confirmation.
+4. Confirm Awakened power, level, XP and size are unchanged.
+5. Verify ordinary V alone does not display the confirmation.
+
+Note: If Awakened already binds V, change that binding in Controls to avoid
+input conflicts. This implementation checks Alt as a modifier rather than
+registering a native multi-key chord.
