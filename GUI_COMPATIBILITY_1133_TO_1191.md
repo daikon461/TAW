@@ -1,11 +1,4 @@
-# Character menu compatibility audit — 1.13.3 → 1.19.1
+# Old GUI restoration — pending implementation
 
-Examined both user-provided JARs with `javap`.
-
-- Both contain `com.awakenedmod.awakened.client.screen.CharacterScreen` extending `AwakenedScreen`.
-- Both retain constructors `CharacterScreen()` and `CharacterScreen(int)` and mouse/key/render methods.
-- 1.13.3 exposes `SETTINGS_TAB`, `TEAM_TAB`, `RELICS_TAB`.
-- 1.19.1 exposes `POWER_TAB`, `STATS_TAB`, `TRIALS_TAB`, `RELICS_TAB`, `RECIPES_TAB`, `SETTINGS_TAB`, `TEAM_TAB`.
-- The old screen class cannot safely replace the newer one without further inspection of its internal calls and data model.
-
-**v0.11 does not replace or modify the 1.19.1 menu.** This avoids risking a crash or overwriting the user's preferred settings. Next step is a client-only compatibility UI (old navigation layout backed by 1.19.1 API), after examining method bytecode and texture assets.
+The user prefers the Awakened 1.13.3 menu. Target is Awakened 1.19.1.
+Both versions contain `com.awakenedmod.awakened.client.screen` GUI classes, but binary compatibility and behavior are not established by class names alone. No old UI code is copied into this addon. A client-side replacement needs confirmed keybinding, render and click-handler mapping and regression tests; do not claim it has been restored yet.

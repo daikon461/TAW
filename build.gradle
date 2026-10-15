@@ -3,7 +3,7 @@ plugins {
     id 'net.neoforged.moddev' version '2.0.107'
 }
 group = 'dev.dualpower'
-version = '0.11.0'
+version = '0.15.0'
 base { archivesName = 'awakened-dual-power' }
 java.toolchain.languageVersion = JavaLanguageVersion.of(21)
 neoForge { version = '21.1.219' }

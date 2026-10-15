@@ -4,9 +4,9 @@ license="All Rights Reserved"
 
 [[mods]]
 modId="awakened_dual_power"
-version="0.11.0"
+version="0.15.0"
 displayName="Awakened Dual Power (Bootstrap)"
-description="Development-only registration of second power ID. No actual awakening or switching."
+description="Read-only checkpoint of current power and skills. No actual awakening or switching."
 
 [[dependencies.awakened_dual_power]]
 modId="neoforge"
