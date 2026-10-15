@@ -124,4 +124,67 @@ public final class FullAwakenedSnapshot {
         }
     }
 
+    /** Checks the previous slot generation without touching the live Awakened attachment. */
+    public static String verifyBackup(ServerPlayer player, int slot) {
+        if (slot != 1 && slot != 2) return "不正なスロット番号";
+        try {
+            CompoundTag data = player.getPersistentData();
+            CompoundTag backups = data.getCompound("awakened_dual_power_codec_slots_backup_v1");
+            String name = "slot" + slot;
+            if (!backups.contains(name, Tag.TAG_COMPOUND)) return "スロット" + slot + "の前世代バックアップはありません";
+            CompoundTag saved = backups.getCompound(name);
+            String expected = data.getString(slot == 1 ? "awakened_dual_power_primary_id" : "awakened_dual_power_second");
+            if (expected.isBlank() || saved.getInt("schema") != 1 || !expected.equals(saved.getString("power_id")))
+                return "前世代バックアップの登録能力IDまたは形式が不一致";
+            PowerData power = PowerData.MAP_CODEC.codec().parse(NbtOps.INSTANCE, saved.get("power"))
+                .result().orElseThrow(() -> new IllegalStateException("backup power decode"));
+            SkillData skill = SkillData.MAP_CODEC.codec().parse(NbtOps.INSTANCE, saved.get("skill"))
+                .result().orElseThrow(() -> new IllegalStateException("backup skill decode"));
+            if (!expected.equals(power.powerId())) return "前世代バックアップの内部能力IDが不一致";
+            Tag p = PowerData.MAP_CODEC.codec().encodeStart(NbtOps.INSTANCE, power)
+                .result().orElseThrow(() -> new IllegalStateException("backup power encode"));
+            Tag k = SkillData.MAP_CODEC.codec().encodeStart(NbtOps.INSTANCE, skill)
+                .result().orElseThrow(() -> new IllegalStateException("backup skill encode"));
+            if (!p.equals(saved.get("power")) || !k.equals(saved.get("skill")))
+                return "前世代バックアップの往復検証に失敗";
+            return "スロット" + slot + "の前世代バックアップ検証OK（レベル" + skill.level() + "、書き換えなし）";
+        } catch (Exception ex) {
+            return "前世代バックアップ検証失敗: " + ex.getClass().getSimpleName() + "（書き換えなし）";
+        }
+    }
+
+    /** Non-mutating restore rehearsal: decode and re-encode both slots and current attachments. */
+    public static String rehearseRestore(ServerPlayer player) {
+        try {
+            CompoundTag data = player.getPersistentData();
+            if (data.getBoolean("awakened_dual_power_transaction_pending")
+                    || data.contains("awakened_dual_power_recovery_snapshot"))
+                return "復元予行演習を停止: 未完了の復旧記録があります";
+            String currentId = AwakenedAttachments.get(player).powerId();
+            if (currentId.isBlank()) return "復元予行演習を停止: 現在の能力IDが空です";
+            Tag livePower = PowerData.MAP_CODEC.codec().encodeStart(NbtOps.INSTANCE, AwakenedAttachments.get(player))
+                .result().orElseThrow(() -> new IllegalStateException("live power encode"));
+            Tag liveSkill = SkillData.MAP_CODEC.codec().encodeStart(NbtOps.INSTANCE, AwakenedAttachments.skill(player))
+                .result().orElseThrow(() -> new IllegalStateException("live skill encode"));
+            PowerData decodedLive = PowerData.MAP_CODEC.codec().parse(NbtOps.INSTANCE, livePower)
+                .result().orElseThrow(() -> new IllegalStateException("live power decode"));
+            SkillData decodedSkill = SkillData.MAP_CODEC.codec().parse(NbtOps.INSTANCE, liveSkill)
+                .result().orElseThrow(() -> new IllegalStateException("live skill decode"));
+            if (!currentId.equals(decodedLive.powerId())
+                    || decodedSkill.level() != AwakenedAttachments.skill(player).level())
+                return "復元予行演習を停止: 現在のデータが往復検証に失敗";
+            String a = verifySlot(player, 1);
+            String b = verifySlot(player, 2);
+            if (!a.contains("検証OK") || !b.contains("検証OK"))
+                return "復元予行演習: 未準備。第1=" + a + " / 第2=" + b;
+            String id1 = data.getString("awakened_dual_power_primary_id");
+            String id2 = data.getString("awakened_dual_power_second");
+            if (id1.isBlank() || id2.isBlank() || id1.equals(id2))
+                return "復元予行演習を停止: 2つの能力IDが未設定または重複";
+            return "復元予行演習OK: 2スロットと現在データのCodec検証成功。ただし実際の復元・切り替えの安全性は未確認（変更なし）";
+        } catch (Exception ex) {
+            return "復元予行演習失敗: " + ex.getClass().getSimpleName() + "（能力変更なし）";
+        }
+    }
+
 }

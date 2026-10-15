@@ -258,6 +258,12 @@ public final class AwakenedDualPowerMod {
                     ctx.getSource().sendSuccess(() -> Component.literal(result), false);
                     return Command.SINGLE_SUCCESS;
                 })))
+            .then(Commands.literal("awakeningcheck").executes(ctx -> {
+                ServerPlayer player = ctx.getSource().getPlayerOrException();
+                String result = SecondAwakeningReadiness.report(player);
+                ctx.getSource().sendSuccess(() -> Component.literal(result), false);
+                return Command.SINGLE_SUCCESS;
+            }))
             .then(Commands.literal("codecslots")
                 .then(Commands.literal("save1").executes(ctx -> {
                     ServerPlayer player = ctx.getSource().getPlayerOrException();
@@ -283,6 +289,25 @@ public final class AwakenedDualPowerMod {
                     ctx.getSource().sendSuccess(() -> Component.literal(result), false);
                     return Command.SINGLE_SUCCESS;
                 })))
+            .then(Commands.literal("codecbackup")
+                .then(Commands.literal("verify1").executes(ctx -> {
+                    ServerPlayer player = ctx.getSource().getPlayerOrException();
+                    String result = FullAwakenedSnapshot.verifyBackup(player, 1);
+                    ctx.getSource().sendSuccess(() -> Component.literal(result), false);
+                    return Command.SINGLE_SUCCESS;
+                }))
+                .then(Commands.literal("verify2").executes(ctx -> {
+                    ServerPlayer player = ctx.getSource().getPlayerOrException();
+                    String result = FullAwakenedSnapshot.verifyBackup(player, 2);
+                    ctx.getSource().sendSuccess(() -> Component.literal(result), false);
+                    return Command.SINGLE_SUCCESS;
+                })))
+            .then(Commands.literal("restorerehearsal").executes(ctx -> {
+                ServerPlayer player = ctx.getSource().getPlayerOrException();
+                String result = FullAwakenedSnapshot.rehearseRestore(player);
+                ctx.getSource().sendSuccess(() -> Component.literal(result), false);
+                return Command.SINGLE_SUCCESS;
+            }))
             .then(Commands.literal("status").executes(ctx -> {
                 ServerPlayer player = ctx.getSource().getPlayerOrException();
                 String second = player.getPersistentData().getString(SECOND_ID);

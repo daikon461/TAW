@@ -1,6 +1,7 @@
 package dev.dualpower;
 
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.player.Player;
@@ -20,7 +21,13 @@ public final class DualPowerItems {
             public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
                 ItemStack stack = player.getItemInHand(hand);
                 if (!level.isClientSide) {
-                    player.displayClientMessage(Component.translatable("message.awakened_dual_power.crystal_locked"), false);
+                    if (player instanceof ServerPlayer serverPlayer) {
+                        // Show the same read-only diagnostics as /dualpower awakeningcheck.
+                        // The crystal is NEVER consumed and no Awakened data is modified.
+                        player.displayClientMessage(Component.literal(SecondAwakeningReadiness.report(serverPlayer)), false);
+                    } else {
+                        player.displayClientMessage(Component.translatable("message.awakened_dual_power.crystal_locked"), false);
+                    }
                 }
                 // Never consume or mutate any Awakened state while the safety lock is active.
                 return InteractionResultHolder.pass(stack);

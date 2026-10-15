@@ -1,3 +1,7 @@
+# v0.38 第二覚醒の結晶・安全診断連携
+
+結晶を右クリックすると読み取り専用の覚醒準備診断を表示します。実際の第二覚醒と切り替えは安全ロック中です。
+
 # Awakened Dual Power v0.30 — Recovery Guard
 
 See V030_CHANGES_JP.md. This is **NOT a production release**.
@@ -48,3 +52,13 @@ Power mutation is blocked even with experimental enable until full Awakened inte
 
 ## v0.36 第二覚醒の結晶
 レシピとアイテムを追加。中心はネザースター。**使用しても覚醒せず消費もしない安全ロック版**。詳細は V036_CHANGES_JP.md。
+
+## v0.37 第二覚醒の安全診断
+
+`/dualpower awakeningcheck` で第1能力の登録とCodecバックアップ、第二能力の保存状況を確認できます。読取専用で、覚醒や能力変更は行いません。結晶は引き続き安全ロックされています。
+
+## v0.39
+`/dualpower restorerehearsal`: 読み取り専用の復元予行演習。実際の復元や能力変更は行いません。
+
+## v0.40
+前世代のCodecバックアップを `/dualpower codecbackup verify1` / `verify2` で非破壊検証できます。第二覚醒・能力切り替えは引き続き安全ロック中です。
