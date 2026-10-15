@@ -302,6 +302,50 @@ public final class AwakenedDualPowerMod {
                     ctx.getSource().sendSuccess(() -> Component.literal(result), false);
                     return Command.SINGLE_SUCCESS;
                 })))
+            .then(Commands.literal("restorepreflight").executes(ctx -> {
+                ServerPlayer player = ctx.getSource().getPlayerOrException();
+                String result = FullAwakenedSnapshot.restorePreflight(player);
+                ctx.getSource().sendSuccess(() -> Component.literal(result), false);
+                return Command.SINGLE_SUCCESS;
+            }))
+            .then(Commands.literal("slotcompare")
+                .then(Commands.literal("1").executes(ctx -> {
+                    ServerPlayer player = ctx.getSource().getPlayerOrException();
+                    String result = FullAwakenedSnapshot.compareLiveSlot(player, 1);
+                    ctx.getSource().sendSuccess(() -> Component.literal(result), false);
+                    return Command.SINGLE_SUCCESS;
+                }))
+                .then(Commands.literal("2").executes(ctx -> {
+                    ServerPlayer player = ctx.getSource().getPlayerOrException();
+                    String result = FullAwakenedSnapshot.compareLiveSlot(player, 2);
+                    ctx.getSource().sendSuccess(() -> Component.literal(result), false);
+                    return Command.SINGLE_SUCCESS;
+                })))
+            .then(Commands.literal("switchsimulation").executes(ctx -> {
+                ServerPlayer player = ctx.getSource().getPlayerOrException();
+                String result = FullAwakenedSnapshot.simulateDetachedSwitch(player);
+                ctx.getSource().sendSuccess(() -> Component.literal(result), false);
+                return Command.SINGLE_SUCCESS;
+            }))
+            .then(Commands.literal("liveaudit").executes(ctx -> {
+                ServerPlayer player = ctx.getSource().getPlayerOrException();
+                String result = FullAwakenedSnapshot.auditLiveIntegrity(player);
+                ctx.getSource().sendSuccess(() -> Component.literal(result), false);
+                return Command.SINGLE_SUCCESS;
+            }))
+            .then(Commands.literal("restorestaging")
+                .then(Commands.literal("1").executes(ctx -> {
+                    ServerPlayer player = ctx.getSource().getPlayerOrException();
+                    String result = FullAwakenedSnapshot.stageRestore(player, 1);
+                    ctx.getSource().sendSuccess(() -> Component.literal(result), false);
+                    return Command.SINGLE_SUCCESS;
+                }))
+                .then(Commands.literal("2").executes(ctx -> {
+                    ServerPlayer player = ctx.getSource().getPlayerOrException();
+                    String result = FullAwakenedSnapshot.stageRestore(player, 2);
+                    ctx.getSource().sendSuccess(() -> Component.literal(result), false);
+                    return Command.SINGLE_SUCCESS;
+                })))
             .then(Commands.literal("restorerehearsal").executes(ctx -> {
                 ServerPlayer player = ctx.getSource().getPlayerOrException();
                 String result = FullAwakenedSnapshot.rehearseRestore(player);

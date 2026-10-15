@@ -4,7 +4,7 @@ license="All Rights Reserved"
 
 [[mods]]
 modId="awakened_dual_power"
-version="0.40.0"
+version="0.45.0"
 displayName="Awakened Dual Power"
 description="Safety-locked dual power addon with a craftable second awakening crystal."
 

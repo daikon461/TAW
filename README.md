@@ -62,3 +62,6 @@ Power mutation is blocked even with experimental enable until full Awakened inte
 
 ## v0.40
 前世代のCodecバックアップを `/dualpower codecbackup verify1` / `verify2` で非破壊検証できます。第二覚醒・能力切り替えは引き続き安全ロック中です。
+
+## v0.45
+`/dualpower restorepreflight` で厳格な読み取り専用事前診断を実行できます。PASSでも実際の切り替えはできません。
