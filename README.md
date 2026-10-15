@@ -1,31 +1,50 @@
-# Awakened Dual Power v0.19 — Alt+V input preview
+# Awakened Dual Power v0.30 — Recovery Guard
 
-Target: Minecraft 1.21.1 / NeoForge 21.1.219 / Awakened 1.19.1 / Java 21.
+See V030_CHANGES_JP.md. This is **NOT a production release**.
 
-## New
-- Client-only key mapping (V; hold Left/Right Alt and press V).
-- Japanese and English localization of the key and preview message.
-- Shows an action-bar confirmation when Alt+V is detected.
-- Dedicated server never loads the client-only handler.
-- Existing `/dualpower` checkpoint, audit, backup and readiness commands retained.
+> v0.29: 再起動をまたぐ5秒クールダウンと復元結果の通知を改善。詳細は V029_CHANGES_JP.md。
 
-**Safety:** This version does NOT switch powers, restore skill data, clear
-scaling/flight effects, or reproduce the 1.13.3 GUI. It sends no network
-packets and does not modify Awakened data when Alt+V is pressed.
+# Awakened Dual Power v0.28 — Persistent Cooldown
 
-## GitHub Actions
-Upload the complete extracted project, including `.github` and `libs`.
-Run the existing build workflow and download the artifact.
-The NeoForge build has NOT been run in this environment; source may need
-API adjustments. Previous loader-independent tests can be run with Java 21.
+# Awakened Dual Power v0.27 — Flight Cleanup Experimental
 
-## Test
-1. Back up your world, use a separate non-hardcore test world.
-2. Confirm `/dualpower status` still works.
-3. Hold Alt and press V: action bar should show a preview confirmation.
-4. Confirm Awakened power, level, XP and size are unchanged.
-5. Verify ordinary V alone does not display the confirmation.
+Target: Minecraft 1.21.1 / NeoForge 21.1.x / Awakened 1.19.1 / Java 21.
 
-Note: If Awakened already binds V, change that binding in Controls to avoid
-input conflicts. This implementation checks Alt as a modifier rather than
-registering a native multi-key chord.
+## v0.27
+See V027_CHANGES_JP.md for flight cleanup API additions.
+
+## Changes
+- Stores an addon-owned `awakened_dual_power_recovery_snapshot` BEFORE attempting to mutate Awakened data.
+- Preserves the pending marker and snapshot if rollback fails; blocks further switching.
+- Clears recovery metadata after successful switch or verified rollback.
+- Fixes preview-mode cooldown consumption: preview checks no longer start a cooldown.
+
+## Known limitations (important)
+- Experimental power switching is NOT safe for production or hardcore worlds.
+- Full skill-tree state, active effects, transformations, flight, client synchronization and the old 1.13.3 menu are NOT implemented/verified.
+- This recovery snapshot is **not an automatic crash recovery system**. Never manually delete a pending marker without a backup.
+- NeoForge Gradle build and in-game behavior are not verified in this environment.
+
+## Build
+Upload the entire source to the existing GitHub repository including `.github` and `libs` and run Actions. Test in a COPY of a normal world only. Keep experimental mode disabled unless intentionally testing.
+
+
+## v0.26: verified rollback
+- After power assignment, verify power ID, level, XP and every Stat allocation before committing the source slot.
+- On exception, retain the pending transaction and recovery snapshot unless the full source state matches after rollback.
+- This does NOT capture all Awakened internal power state, transformation or flight; experimental mode remains off by default.
+- NeoForge build and in-game behavior have not been verified in this environment.
+
+## v0.28
+See V028_CHANGES_JP.md. Cooldown is stored per player instead of only in server process memory.
+
+
+## v0.31 safety interlock
+Power mutation is blocked even with experimental enable until full Awakened internal state serialization is implemented.
+
+## v0.32 注意
+安全優先で能力変更コードを削除しました。Alt+Vは検査のみです。v1.0.0完成版ではありません。
+
+
+## v0.36 第二覚醒の結晶
+レシピとアイテムを追加。中心はネザースター。**使用しても覚醒せず消費もしない安全ロック版**。詳細は V036_CHANGES_JP.md。

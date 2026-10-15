@@ -82,7 +82,10 @@ public final class AwakenedDualPowerMod {
         return Command.SINGLE_SUCCESS;
     }
 
-    public AwakenedDualPowerMod() { NeoForge.EVENT_BUS.register(this); }
+    public AwakenedDualPowerMod(net.neoforged.bus.api.IEventBus modBus) {
+        DualPowerItems.ITEMS.register(modBus);
+        NeoForge.EVENT_BUS.register(this);
+    }
 
     /** Copies only addon-owned tags when Minecraft replaces a player after death.
      *  Does not touch Awakened's own attachments or gameplay effects.
@@ -91,7 +94,11 @@ public final class AwakenedDualPowerMod {
     public void onPlayerClone(PlayerEvent.Clone event) {
         CompoundTag oldData = event.getOriginal().getPersistentData();
         CompoundTag newData = event.getEntity().getPersistentData();
-        for (String key : new String[]{SECOND_ID, PRIMARY_ID, BACKUP_ID, SLOTS_ID, HISTORY_ID}) {
+        for (String key : new String[]{SECOND_ID, PRIMARY_ID, BACKUP_ID, SLOTS_ID, HISTORY_ID,
+                ExperimentalPowerSwitch.ENABLE_FLAG,
+                "awakened_dual_power_transaction_pending",
+                "awakened_dual_power_recovery_snapshot",
+                "awakened_dual_power_last_success_epoch_ms"}) {
             if (oldData.contains(key)) {
                 Tag value = oldData.get(key);
                 if (value != null) newData.put(key, value.copy());
@@ -224,13 +231,57 @@ public final class AwakenedDualPowerMod {
     @SubscribeEvent
     public void registerCommands(RegisterCommandsEvent event) {
         event.getDispatcher().register(Commands.literal("dualpower")
+            .then(Commands.literal("experimental").requires(source -> source.hasPermission(2))
+                .then(Commands.literal("enable").executes(ctx -> {
+                    ctx.getSource().getPlayerOrException().getPersistentData().putBoolean(ExperimentalPowerSwitch.ENABLE_FLAG, true);
+                    ctx.getSource().sendSuccess(() -> Component.literal("実験的能力切り替えを有効にしました。バックアップ済みテストワールド専用です"), false);
+                    return 1;
+                }))
+                .then(Commands.literal("disable").executes(ctx -> {
+                    ctx.getSource().getPlayerOrException().getPersistentData().remove(ExperimentalPowerSwitch.ENABLE_FLAG);
+                    ctx.getSource().sendSuccess(() -> Component.literal("実験的能力切り替えを無効にしました"), false);
+                    return 1;
+                }))
+                .then(Commands.literal("switch").executes(ctx -> {
+                    String result = ExperimentalPowerSwitch.execute(ctx.getSource().getPlayerOrException());
+                    ctx.getSource().sendSuccess(() -> Component.literal(result), false);
+                    return 1;
+                })))
+            .then(Commands.literal("fullsnapshot")
+                .then(Commands.literal("save").executes(ctx -> {
+                    String result = FullAwakenedSnapshot.capture(ctx.getSource().getPlayerOrException());
+                    ctx.getSource().sendSuccess(() -> Component.literal(result), false);
+                    return Command.SINGLE_SUCCESS;
+                }))
+                .then(Commands.literal("verify").executes(ctx -> {
+                    String result = FullAwakenedSnapshot.verify(ctx.getSource().getPlayerOrException());
+                    ctx.getSource().sendSuccess(() -> Component.literal(result), false);
+                    return Command.SINGLE_SUCCESS;
+                })))
+            .then(Commands.literal("codecslots")
+                .then(Commands.literal("save1").executes(ctx -> {
+                    ctx.getSource().sendSuccess(() -> Component.literal(FullAwakenedSnapshot.captureSlot(ctx.getSource().getPlayerOrException(), 1)), false);
+                    return Command.SINGLE_SUCCESS;
+                }))
+                .then(Commands.literal("save2").executes(ctx -> {
+                    ctx.getSource().sendSuccess(() -> Component.literal(FullAwakenedSnapshot.captureSlot(ctx.getSource().getPlayerOrException(), 2)), false);
+                    return Command.SINGLE_SUCCESS;
+                }))
+                .then(Commands.literal("verify1").executes(ctx -> {
+                    ctx.getSource().sendSuccess(() -> Component.literal(FullAwakenedSnapshot.verifySlot(ctx.getSource().getPlayerOrException(), 1)), false);
+                    return Command.SINGLE_SUCCESS;
+                }))
+                .then(Commands.literal("verify2").executes(ctx -> {
+                    ctx.getSource().sendSuccess(() -> Component.literal(FullAwakenedSnapshot.verifySlot(ctx.getSource().getPlayerOrException(), 2)), false);
+                    return Command.SINGLE_SUCCESS;
+                })))
             .then(Commands.literal("status").executes(ctx -> {
                 ServerPlayer player = ctx.getSource().getPlayerOrException();
                 String second = player.getPersistentData().getString(SECOND_ID);
                 String primary = AwakenedAttachments.get(player).powerId();
                 ctx.getSource().sendSuccess(() -> Component.literal(
                     "第1能力（読取専用）: " + primary + " / 第2能力（登録情報のみ）: " +
-                    (second.isEmpty() ? "未登録" : second) + " / 切り替え機能は未実装"), false);
+                    (second.isEmpty() ? "未登録" : second) + " / Alt+V切り替えは管理者の実験機能有効化時のみ"), false);
                 return Command.SINGLE_SUCCESS;
             }))
             .then(Commands.literal("switchcheck")

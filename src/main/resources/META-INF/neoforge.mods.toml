@@ -4,9 +4,9 @@ license="All Rights Reserved"
 
 [[mods]]
 modId="awakened_dual_power"
-version="0.19.0"
-displayName="Awakened Dual Power (Bootstrap)"
-description="Read-only checkpoint of current power and skills. No actual awakening or switching."
+version="0.36.0"
+displayName="Awakened Dual Power"
+description="Safety-locked dual power addon with a craftable second awakening crystal."
 
 [[dependencies.awakened_dual_power]]
 modId="neoforge"

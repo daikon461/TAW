@@ -10,6 +10,7 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import org.lwjgl.glfw.GLFW;
+import net.neoforged.neoforge.network.PacketDistributor;
 
 /**
  * Alt+V client-side input preview only. No packets or Awakened data mutations.
@@ -43,6 +44,7 @@ public final class DualPowerClientKeys {
                 boolean alt = GLFW.glfwGetKey(window, GLFW.GLFW_KEY_LEFT_ALT) == GLFW.GLFW_PRESS
                            || GLFW.glfwGetKey(window, GLFW.GLFW_KEY_RIGHT_ALT) == GLFW.GLFW_PRESS;
                 if (alt) {
+                    PacketDistributor.sendToServer(new DualPowerSwitchRequest());
                     minecraft.player.displayClientMessage(Component.translatable(
                         "message.awakened_dual_power.preview"), true);
                 }

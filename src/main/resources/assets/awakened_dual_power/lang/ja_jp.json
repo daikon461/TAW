@@ -1,5 +1,7 @@
 {
   "key.categories.awakened_dual_power": "Awakened Dual Power",
   "key.awakened_dual_power.preview": "能力切り替え（プレビューのみ、Alt+V）",
-  "message.awakened_dual_power.preview": "[Dual Power] Alt+V を検出しました。能力切り替えは安全性確認まで無効です。"
+  "message.awakened_dual_power.preview": "[Dual Power] Alt+V を検出しました。能力切り替えは安全性確認まで無効です。",
+  "item.awakened_dual_power.second_awakening_crystal": "第二覚醒の結晶",
+  "message.awakened_dual_power.crystal_locked": "第二覚醒は現在、安全性検証のためロックされています。結晶は消費されません。"
 }

@@ -1,5 +1,7 @@
 {
   "key.categories.awakened_dual_power": "Awakened Dual Power",
   "key.awakened_dual_power.preview": "Power switch (preview only, Alt+V)",
-  "message.awakened_dual_power.preview": "[Dual Power] Alt+V detected. Actual power switching is disabled pending safety validation."
+  "message.awakened_dual_power.preview": "[Dual Power] Alt+V detected. Actual power switching is disabled pending safety validation.",
+  "item.awakened_dual_power.second_awakening_crystal": "Second Awakening Crystal",
+  "message.awakened_dual_power.crystal_locked": "Second awakening is safety-locked pending data recovery verification. Crystal not consumed."
 }
