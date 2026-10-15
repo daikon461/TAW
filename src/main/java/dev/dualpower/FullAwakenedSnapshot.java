@@ -73,26 +73,61 @@ public final class FullAwakenedSnapshot {
     /** Save a complete Codec snapshot to the slot matching the CURRENT power ID only. */
     public static String captureSlot(ServerPlayer player, int slot) {
         if (slot != 1 && slot != 2) return "不正なスロット番号";
-        String idKey = slot == 1 ? "awakened_dual_power_primary_id" : "awakened_dual_power_second";
-        String expected = player.getPersistentData().getString(idKey);
-        String current = AwakenedAttachments.get(player).powerId();
-        if (expected.isBlank() || !expected.equals(current))
-            return "保存中止: スロット" + slot + "の登録能力と現在の能力が一致しません";
-        String result = capture(player);
-        if (!result.startsWith("PowerDataとSkillData")) return result;
         CompoundTag data = player.getPersistentData();
-        CompoundTag full = data.getCompound(KEY).copy();
-        if (!expected.equals(full.getString("power_id"))) return "保存中止: 能力IDの再確認に失敗";
-        CompoundTag slots = data.getCompound("awakened_dual_power_codec_slots_v1").copy();
-        String name = "slot" + slot;
-        if (slots.contains(name, Tag.TAG_COMPOUND)) {
-            CompoundTag backups = data.getCompound("awakened_dual_power_codec_slots_backup_v1").copy();
-            backups.put(name, slots.getCompound(name).copy());
-            data.put("awakened_dual_power_codec_slots_backup_v1", backups);
+        if (data.getBoolean("awakened_dual_power_transaction_pending")
+                || data.contains("awakened_dual_power_recovery_snapshot"))
+            return "保存中止: 未完了の復旧記録があります";
+        String expected = data.getString(slot == 1 ? "awakened_dual_power_primary_id" : "awakened_dual_power_second");
+        if (expected.isBlank() || !expected.equals(AwakenedAttachments.get(player).powerId()))
+            return "保存中止: スロット" + slot + "の登録能力と現在の能力が一致しません";
+        final String slotsKey = "awakened_dual_power_codec_slots_v1";
+        final String backupKey = "awakened_dual_power_codec_slots_backup_v1";
+        final String name = "slot" + slot;
+        try {
+            Tag power = PowerData.MAP_CODEC.codec().encodeStart(NbtOps.INSTANCE, AwakenedAttachments.get(player))
+                    .result().orElseThrow();
+            Tag skill = SkillData.MAP_CODEC.codec().encodeStart(NbtOps.INSTANCE, AwakenedAttachments.skill(player))
+                    .result().orElseThrow();
+            PowerData decodedPower = PowerData.MAP_CODEC.codec().parse(NbtOps.INSTANCE, power)
+                    .result().orElseThrow();
+            SkillData decodedSkill = SkillData.MAP_CODEC.codec().parse(NbtOps.INSTANCE, skill)
+                    .result().orElseThrow();
+            if (!expected.equals(decodedPower.powerId())
+                    || !power.equals(PowerData.MAP_CODEC.codec().encodeStart(NbtOps.INSTANCE, decodedPower).result().orElseThrow())
+                    || !skill.equals(SkillData.MAP_CODEC.codec().encodeStart(NbtOps.INSTANCE, decodedSkill).result().orElseThrow()))
+                return "保存中止: Codec往復検証に失敗";
+            CompoundTag snapshot = new CompoundTag();
+            snapshot.putInt("schema", 1);
+            snapshot.putString("power_id", expected);
+            snapshot.put("power", power.copy());
+            snapshot.put("skill", skill.copy());
+            CompoundTag oldSlots = data.getCompound(slotsKey).copy();
+            CompoundTag oldBackups = data.getCompound(backupKey).copy();
+            CompoundTag newSlots = oldSlots.copy();
+            CompoundTag newBackups = oldBackups.copy();
+            if (oldSlots.contains(name, Tag.TAG_COMPOUND))
+                newBackups.put(name, oldSlots.getCompound(name).copy());
+            newSlots.put(name, snapshot);
+            boolean hadSlots = data.contains(slotsKey);
+            boolean hadBackups = data.contains(backupKey);
+            try {
+                data.put(slotsKey, newSlots);
+                data.put(backupKey, newBackups);
+                if (!verifySlot(player, slot).contains("検証OK"))
+                    throw new IllegalStateException("post-commit verification");
+                Tag afterPower = PowerData.MAP_CODEC.codec().encodeStart(NbtOps.INSTANCE, AwakenedAttachments.get(player)).result().orElseThrow();
+                Tag afterSkill = SkillData.MAP_CODEC.codec().encodeStart(NbtOps.INSTANCE, AwakenedAttachments.skill(player)).result().orElseThrow();
+                if (!power.equals(afterPower) || !skill.equals(afterSkill))
+                    throw new IllegalStateException("live attachment changed");
+            } catch (Exception ex) {
+                if (hadSlots) data.put(slotsKey, oldSlots); else data.remove(slotsKey);
+                if (hadBackups) data.put(backupKey, oldBackups); else data.remove(backupKey);
+                return "保存失敗: 保存スロットを元に戻しました（" + ex.getClass().getSimpleName() + "）";
+            }
+            return "スロット" + slot + "のCodecデータを検証・保存しました（能力変更なし）";
+        } catch (Exception ex) {
+            return "保存中止: " + ex.getClass().getSimpleName() + "（変更なし）";
         }
-        slots.put(name, full);
-        data.put("awakened_dual_power_codec_slots_v1", slots);
-        return "スロット" + slot + "のCodecデータを保存しました（読み取り専用・能力変更なし）";
     }
 
     /** Decode and validate a slot independently; never applies its contents. */

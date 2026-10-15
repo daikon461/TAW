@@ -264,12 +264,34 @@ public final class AwakenedDualPowerMod {
                 ctx.getSource().sendSuccess(() -> Component.literal(result), false);
                 return Command.SINGLE_SUCCESS;
             }))
+            .then(Commands.literal("switchgate").executes(ctx -> {
+                ServerPlayer player = ctx.getSource().getPlayerOrException();
+                String result = SwitchReadinessGate.report(player);
+                ctx.getSource().sendSuccess(() -> Component.literal(result), false);
+                return Command.SINGLE_SUCCESS;
+            }))
             .then(Commands.literal("attachmentaudit").executes(ctx -> {
                 ServerPlayer player = ctx.getSource().getPlayerOrException();
                 String result = AttachmentCoverageAudit.report(player);
                 ctx.getSource().sendSuccess(() -> Component.literal(result), false);
                 return Command.SINGLE_SUCCESS;
             }))
+            .then(Commands.literal("secondcandidate")
+                .then(Commands.argument("power_id", StringArgumentType.word()).executes(ctx -> {
+                    ServerPlayer player = ctx.getSource().getPlayerOrException();
+                    String id = StringArgumentType.getString(ctx, "power_id");
+                    String result = DetachedSecondCandidate.preview(player, id);
+                    ctx.getSource().sendSuccess(() -> Component.literal(result), false);
+                    return Command.SINGLE_SUCCESS;
+                })))
+            .then(Commands.literal("secondcandidate_save")
+                .then(Commands.argument("power_id", StringArgumentType.word()).executes(ctx -> {
+                    ServerPlayer player = ctx.getSource().getPlayerOrException();
+                    String id = StringArgumentType.getString(ctx, "power_id");
+                    String result = DetachedSecondCandidate.saveCandidate(player, id);
+                    ctx.getSource().sendSuccess(() -> Component.literal(result), false);
+                    return Command.SINGLE_SUCCESS;
+                })))
             .then(Commands.literal("secondpath").executes(ctx -> {
                 ServerPlayer player = ctx.getSource().getPlayerOrException();
                 String result = SecondAwakeningPath.report(player);
