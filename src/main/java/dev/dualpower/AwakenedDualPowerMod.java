@@ -260,19 +260,27 @@ public final class AwakenedDualPowerMod {
                 })))
             .then(Commands.literal("codecslots")
                 .then(Commands.literal("save1").executes(ctx -> {
-                    ctx.getSource().sendSuccess(() -> Component.literal(FullAwakenedSnapshot.captureSlot(ctx.getSource().getPlayerOrException(), 1)), false);
+                    ServerPlayer player = ctx.getSource().getPlayerOrException();
+                    String result = FullAwakenedSnapshot.captureSlot(player, 1);
+                    ctx.getSource().sendSuccess(() -> Component.literal(result), false);
                     return Command.SINGLE_SUCCESS;
                 }))
                 .then(Commands.literal("save2").executes(ctx -> {
-                    ctx.getSource().sendSuccess(() -> Component.literal(FullAwakenedSnapshot.captureSlot(ctx.getSource().getPlayerOrException(), 2)), false);
+                    ServerPlayer player = ctx.getSource().getPlayerOrException();
+                    String result = FullAwakenedSnapshot.captureSlot(player, 2);
+                    ctx.getSource().sendSuccess(() -> Component.literal(result), false);
                     return Command.SINGLE_SUCCESS;
                 }))
                 .then(Commands.literal("verify1").executes(ctx -> {
-                    ctx.getSource().sendSuccess(() -> Component.literal(FullAwakenedSnapshot.verifySlot(ctx.getSource().getPlayerOrException(), 1)), false);
+                    ServerPlayer player = ctx.getSource().getPlayerOrException();
+                    String result = FullAwakenedSnapshot.verifySlot(player, 1);
+                    ctx.getSource().sendSuccess(() -> Component.literal(result), false);
                     return Command.SINGLE_SUCCESS;
                 }))
                 .then(Commands.literal("verify2").executes(ctx -> {
-                    ctx.getSource().sendSuccess(() -> Component.literal(FullAwakenedSnapshot.verifySlot(ctx.getSource().getPlayerOrException(), 2)), false);
+                    ServerPlayer player = ctx.getSource().getPlayerOrException();
+                    String result = FullAwakenedSnapshot.verifySlot(player, 2);
+                    ctx.getSource().sendSuccess(() -> Component.literal(result), false);
                     return Command.SINGLE_SUCCESS;
                 })))
             .then(Commands.literal("status").executes(ctx -> {
