@@ -1,0 +1,30 @@
+modLoader="javafml"
+loaderVersion="[1,)"
+license="All Rights Reserved"
+
+[[mods]]
+modId="awakened_dual_power"
+version="0.9.0"
+displayName="Awakened Dual Power (Bootstrap)"
+description="Development-only registration of second power ID. No actual awakening or switching."
+
+[[dependencies.awakened_dual_power]]
+modId="neoforge"
+type="required"
+versionRange="[21.1.219,)"
+ordering="NONE"
+side="BOTH"
+
+[[dependencies.awakened_dual_power]]
+modId="minecraft"
+type="required"
+versionRange="[1.21.1,1.21.2)"
+ordering="NONE"
+side="BOTH"
+
+[[dependencies.awakened_dual_power]]
+modId="awakened"
+type="required"
+versionRange="[1.13.3,1.13.4)"
+ordering="AFTER"
+side="BOTH"
