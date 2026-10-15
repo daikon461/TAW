@@ -4,7 +4,7 @@ license="All Rights Reserved"
 
 [[mods]]
 modId="awakened_dual_power"
-version="0.9.0"
+version="0.11.0"
 displayName="Awakened Dual Power (Bootstrap)"
 description="Development-only registration of second power ID. No actual awakening or switching."
 

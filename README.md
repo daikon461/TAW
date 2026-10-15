@@ -1,19 +1,11 @@
-# Awakened Dual Power v0.10 — Awakened 1.19.1 compatibility check
+# Awakened Dual Power v0.11 — safe snapshot prototype
 
-Targets Minecraft 1.21.1, NeoForge 21.1.219+, Java 21, Awakened **1.19.1**.
+Target: Minecraft 1.21.1, NeoForge 21.1.219, Awakened 1.19.1, Java 21.
 
-## Changes
-- Exact Awakened 1.19.1 dependency range in `neoforge.mods.toml`.
-- `compileOnly` dependency on the supplied Awakened JAR in `libs/`. This binary is not embedded in the addon JAR.
-- `/dualpower status` reads the primary Awakened power ID without changing it, and shows separately stored second-power metadata.
-- Administrative `/dualpower second set <id>` and `clear` still manage *metadata only*; they do not grant a power or validate the power ID against Awakened's registry.
+New: immutable, validated per-slot skill snapshots with versioned codec, roundtrip and corruption tests. This is a **standalone storage codec**, not yet wired to player NBT/attachments; no actual in-game skill persistence for two slots yet.
 
-## Safety
-No Alt+V, actual power switching, skill restoration, effect cleanup, or migration is enabled.
-Use a copy of a test world; back up the original first.
+Menu audit: see `GUI_COMPATIBILITY_1133_TO_1191.md`. The requested 1.13.3 menu has **not yet been restored**; v0.11 intentionally leaves 1.19.1's menu untouched.
 
-## Build
-Upload all files to GitHub, including `.github/workflows/build.yml` and `libs/`.
-Run the GitHub Actions workflow. Build is **not verified here**.
-In game run `/dualpower status` and check that the first ability shown matches the existing Awakened ability.
-Do not run `second set` with arbitrary IDs on a production world.
+Existing `/dualpower status` and metadata-only `second set/clear` commands remain. **No live ability switching** is enabled. Test only in a backed-up world.
+
+Build using `.github/workflows/build.yml`; `libs/awakened-1.19.1+1.21.1.jar` must be uploaded. Gradle build was not run in this environment. Pure Java tests were run with javac/java 21.
